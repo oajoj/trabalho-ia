@@ -9,6 +9,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -16,35 +17,24 @@ public class Runner {
     private List<Pessoa> ladoDireito = new ArrayList<>();
     private List<Pessoa> ladoEsquerdo = new ArrayList<>();
     private Barco barco = new Barco();
+    private AtomicInteger count = new AtomicInteger(0);
 
     public Runner(){
-        var mae = Pessoa.builder()
-                .peso(100)
-                .tipo(TipoPessoa.MAE)
-                .build();
+        for (TipoPessoa tipo : TipoPessoa.values()) {
+            var pessoa = Pessoa.builder()
+                    .peso(tipo.getPeso())
+                    .tipo(tipo)
+                    .build();
+            ladoEsquerdo.add(pessoa);
 
-        var pai = Pessoa.builder()
-                .peso(100)
-                .tipo(TipoPessoa.PAI)
-                .build();
-
-        var filho = Pessoa.builder()
-                .peso(50)
-                .tipo(TipoPessoa.FILHO)
-                .build();
-
-        var filha = Pessoa.builder()
-                .peso(50)
-                .tipo(TipoPessoa.FILHA)
-                .build();
-
-        ladoEsquerdo.addAll(List.of(mae, pai, filho, filha));
+        }
     }
 
     public void run() {
         String LE = "";
         String LD = "";
         while(CollectionUtils.isNotEmpty(ladoEsquerdo) && ladoDireito.size() < 4){
+            count.addAndGet(1);
             var quantidadeJogadores = sortearQuantidadeJogadores();
             sortearPessoasNoBarco(quantidadeJogadores, ladoEsquerdo);
             moverEDesembarcar(Posicao.DIREITO);
@@ -57,7 +47,8 @@ public class Runner {
 
         LE = getString(ladoEsquerdo);
         LD = getString(ladoDireito);
-        System.out.println("LE["+ LE +"] LD["+ LD +"]");
+        System.out.println("Lado Esquerdo: ["+ LE +"]\nLado direito: ["+ LD +"]");
+        System.out.println("Movimentos: "+count);
     }
 
     private String getString(List<Pessoa> pessoas) {
@@ -74,9 +65,9 @@ public class Runner {
         String BC = "";
         LE = getString(ladoEsquerdo);
         LD = getString(ladoDireito);
-        BC = getString(barco.getPessoas().stream().collect(Collectors.toList()));
+        BC = getString(new ArrayList<>(barco.getPessoas()));
 
-        System.out.println("LE["+ LE +"] BC["+BC+"] LD["+ LD +"]");
+        System.out.println("Lado Esquerdo: ["+ LE +"]\nBarco: ["+BC+"]\nLado direito: ["+ LD +"]");
         switch (posicao){
             case DIREITO:
                 barco.setPosicao(Posicao.DIREITO);
@@ -89,25 +80,28 @@ public class Runner {
                 barco.getPessoas().clear();
                 break;
         }
+        count.addAndGet(barco.getPessoas().size());
     }
 
     private void sortearPessoasNoBarco(Integer quantidadeJogadores, List<Pessoa> pessoas) {
-        System.out.println("sorteando");
         var flag = true;
         var pessoa = pessoas.get(
                 new Random().nextInt(pessoas.size())
         );
 
-        if(quantidadeJogadores > 1 && pessoa.getPeso() < 100){
+        if(quantidadeJogadores == 1 || pessoa.getPeso() < 100){
             Pessoa pessoa2;
-            do {
+            while(flag){
+                count.addAndGet(1);
                 pessoa2 = pessoas.get(
                         new Random().nextInt(pessoas.size())
                 );
-                flag = pessoa2.equals(pessoa) || pessoa2.getPeso() + pessoa.getPeso() > 100;
-            }while(flag);
-            pessoas.remove(pessoa2);
-            barco.getPessoas().add(pessoa2);
+                if(pessoa2.equals(pessoa) || pessoa2.getPeso() + pessoa.getPeso() > 100){
+                    break;
+                }
+                pessoas.remove(pessoa2);
+                barco.getPessoas().add(pessoa2);
+            }
         }
         pessoas.remove(pessoa);
         barco.getPessoas().add(pessoa);
