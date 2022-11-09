@@ -89,7 +89,7 @@ public class Runner {
                 new Random().nextInt(pessoas.size())
         );
 
-        if(quantidadeJogadores == 1 || pessoa.getPeso() < 100){
+        if(quantidadeJogadores > 1 || pessoa.getPeso() < 100){
             Pessoa pessoa2;
             while(flag){
                 count.addAndGet(1);
