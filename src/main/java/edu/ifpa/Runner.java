@@ -17,7 +17,7 @@ public class Runner {
     private List<Pessoa> ladoDireito = new ArrayList<>();
     private List<Pessoa> ladoEsquerdo = new ArrayList<>();
     private Barco barco = new Barco();
-    private AtomicInteger count = new AtomicInteger(0);
+    private final AtomicInteger count = new AtomicInteger(0);
 
     public Runner(){
         for (TipoPessoa tipo : TipoPessoa.values()) {
